@@ -11,22 +11,26 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(lib);
 
-    const cflags: []const []const u8 = switch (target.toTarget().abi) {
+    const cflags: []const []const u8 = switch (target.result.abi) {
         .msvc => &.{"-DM_PI=3.1415826535"},
         else => &.{},
     };
-    lib.addCSourceFiles(&.{
-        "src/denoise.c",
-        "src/rnn.c",
-        "src/rnn_data.c",
-        "src/rnn_reader.c",
-        "src/pitch.c",
-        "src/kiss_fft.c",
-        "src/celt_lpc.c",
-    }, cflags);
-    lib.addIncludePath(.{ .path = "include" });
+    lib.addCSourceFiles(.{
+        .files = &.{
+            "src/denoise.c",
+            "src/rnn.c",
+            "src/rnn_data.c",
+            "src/rnn_reader.c",
+            "src/pitch.c",
+            "src/kiss_fft.c",
+            "src/celt_lpc.c",
+        },
+        .flags = cflags,
+    });
+
+    lib.addIncludePath(.{ .cwd_relative = "include" });
     lib.linkLibC();
-    lib.installHeader("include/rnnoise.h", "rnnoise.h");
+    lib.installHeader(.{ .cwd_relative = "include/rnnoise.h" }, "rnnoise.h");
 
     {
         const exe = b.addExecutable(.{
@@ -34,9 +38,9 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
         });
-        exe.addCSourceFiles(&.{
+        exe.addCSourceFiles(.{ .files = &.{
             "examples/rnnoise_demo.c",
-        }, &.{});
+        } });
         exe.linkLibrary(lib);
         b.installArtifact(exe);
 
