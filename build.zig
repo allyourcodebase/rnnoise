@@ -13,22 +13,12 @@ pub fn build(b: *std.Build) void {
         "load the little model (default false)",
     ) orelse false;
 
-    // const x86_rtcd = (b.option(bool, "rtcd", "x86 only option") orelse false) and
-    //     target.result.cpu.arch.isX86();
-    const x86_rtcd = false;
-    const sse4_1 = x86_rtcd or (target.result.cpu.arch.isX86() and
+    const x86_rtcd = (b.option(bool, "rtcd", "x86 only option") orelse false) and
+        target.result.cpu.arch.isX86();
+    const sse4_1 = !x86_rtcd and (target.result.cpu.arch.isX86() and
         std.Target.x86.featureSetHas(target.result.cpu.features, .sse4_1));
-    const avx2 = x86_rtcd or (target.result.cpu.arch.isX86() and
+    const avx2 = !x86_rtcd and (target.result.cpu.arch.isX86() and
         std.Target.x86.featureSetHas(target.result.cpu.features, .avx2));
-    if (x86_rtcd) {
-        // Enable sse and avx unconditionally when doing rtcd.
-        // target.result.cpu.features.addFeature(@intFromEnum(std.Target.x86.Feature.avx));
-        // target.result.cpu.features.addFeature(@intFromEnum(std.Target.x86.Feature.avx2));
-        // target.result.cpu.features.addFeature(@intFromEnum(std.Target.x86.Feature.sse));
-        // target.result.cpu.features.addFeature(@intFromEnum(std.Target.x86.Feature.sse2));
-        // target.result.cpu.features.addFeature(@intFromEnum(std.Target.x86.Feature.sse3));
-        // target.result.cpu.features.addFeature(@intFromEnum(std.Target.x86.Feature.sse4_1));
-    }
 
     const config = b.addConfigHeader(.{}, .{
         .RNNOISE_BUILD = true,
@@ -49,7 +39,7 @@ pub fn build(b: *std.Build) void {
         .STDC_HEADERS = true,
         .SUPPORT_ATTRIBUTE_VISIBILITY_DEFAULT = true,
         .SUPPORT_FLAG_VISIBILITY = true,
-        //.CPU_INFO_BY_ASM = true,
+        .CPU_INFO_BY_ASM = if (x86_rtcd) true else null,
         .RNN_ENABLE_X86_RTCD = if (x86_rtcd) true else null,
     });
 
@@ -83,12 +73,57 @@ pub fn build(b: *std.Build) void {
         .flags = cflags,
     });
 
-    if (target.result.cpu.arch.isX86()) {
+    if (x86_rtcd) {
         mod.addCSourceFiles(.{
             .root = upstream.path("src"),
             .files = x86_rtcd_sources,
             .flags = cflags,
         });
+
+        const sse_obj = b.addObject(.{
+            .name = "rnnoise_sse4_1",
+            .root_module = b.createModule(.{
+                .target = b.resolveTargetQuery(.{
+                    .cpu_arch = .x86_64,
+                    .cpu_model = .baseline,
+                    .cpu_features_add = std.Target.x86.featureSet(&.{.sse4_1}),
+                    .os_tag = target.result.os.tag,
+                    .abi = target.result.abi,
+                }),
+                .optimize = optimize,
+                .link_libc = true,
+            }),
+        });
+
+        const avx_obj = b.addObject(.{
+            .name = "rnnoise_avx2",
+            .root_module = b.createModule(.{
+                .target = b.resolveTargetQuery(.{
+                    .cpu_arch = .x86_64,
+                    .cpu_model = .baseline,
+                    .cpu_features_add = std.Target.x86.featureSet(&.{.avx2}),
+                    .os_tag = target.result.os.tag,
+                    .abi = target.result.abi,
+                }),
+                .optimize = optimize,
+                .link_libc = true,
+            }),
+        });
+
+        sse_obj.root_module.addIncludePath(upstream.path("src"));
+        sse_obj.root_module.addCSourceFiles(.{
+            .root = upstream.path("src"),
+            .files = rnnoise_sources_sse4_1,
+        });
+
+        avx_obj.root_module.addIncludePath(upstream.path("src"));
+        avx_obj.root_module.addCSourceFiles(.{
+            .root = upstream.path("src"),
+            .files = rnnoise_sources_avx2,
+        });
+
+        mod.addObject(sse_obj);
+        mod.addObject(avx_obj);
     }
 
     if (sse4_1) {
