@@ -4,6 +4,22 @@
 
 Run `zig build` to create static and dynamic libraries.
 See `zig build -h` for all custom options.
+```
+Project-Specific Options:
+  -Dtarget=[string]            The CPU architecture, OS, and ABI to build for
+  -Dcpu=[string]               Target CPU features to add or subtract
+  -Dofmt=[string]              Target object format
+  -Ddynamic-linker=[string]    Path to interpreter on the target system
+  -Doptimize=[enum]            Prioritize performance, safety, or binary size
+                                 Supported Values:
+                                   Debug
+                                   ReleaseSafe
+                                   ReleaseFast
+                                   ReleaseSmall
+  -Dlittle=[bool]              load the little model (default false)
+  -Drtcd=[bool]                x86 only option
+  -Dassertions=[bool]          (default false)
+```
 
 ### Usage from Zig
 
