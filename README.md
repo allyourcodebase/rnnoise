@@ -16,10 +16,11 @@ Project-Specific Options:
                                    ReleaseSafe
                                    ReleaseFast
                                    ReleaseSmall
-  -Dlittle=[bool]              load the little model (default false)
-  -Drtcd=[bool]                x86 only option
-  -Dassertions=[bool]          (default false)
-```
+  -Dlittle=[bool]              embed the little model (default false)
+  -Drtcd=[bool]                Enable x86 rtcd
+  -Ddisable-debug-float=[bool] (default true)
+  -Dassertions=[bool]          Enable assertions (enabled by default in debug)
+  ```
 
 ### Usage from Zig
 

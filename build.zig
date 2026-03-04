@@ -10,10 +10,10 @@ pub fn build(b: *std.Build) void {
     const little_model = b.option(
         bool,
         "little",
-        "load the little model (default false)",
+        "embed the little model (default false)",
     ) orelse false;
 
-    const x86_rtcd = (b.option(bool, "rtcd", "x86 only option") orelse false) and
+    const x86_rtcd = (b.option(bool, "rtcd", "Enable x86 rtcd") orelse false) and
         target.result.cpu.arch.isX86();
     const sse4_1 = !x86_rtcd and (target.result.cpu.arch.isX86() and
         std.Target.x86.featureSetHas(target.result.cpu.features, .sse4_1));
@@ -22,7 +22,7 @@ pub fn build(b: *std.Build) void {
 
     const config = b.addConfigHeader(.{}, .{
         .RNNOISE_BUILD = true,
-        .DISABLE_DEBUG_FLOAT = true,
+        .DISABLE_DEBUG_FLOAT = b.option(bool, "disable-debug-float", "(default true)") orelse true,
         .HAVE_DLFCN_H = true,
         .HAVE_INTTYPES_H = true,
         .HAVE_STDINT_H = true,
@@ -35,11 +35,15 @@ pub fn build(b: *std.Build) void {
         .HAVE_UNISTD_H = true,
         .HAVE_WCHAR_H = true,
         .HAVE_MINIX_CONFIG_H = null,
-        .OP_ENABLE_ASSERTIONS = b.option(bool, "assertions", "(default false)"),
+        .OP_ENABLE_ASSERTIONS = b.option(
+            bool,
+            "assertions",
+            "Enable assertions (enabled by default in debug)",
+        ) orelse if (optimize == .Debug) true else null,
         .STDC_HEADERS = true,
         .SUPPORT_ATTRIBUTE_VISIBILITY_DEFAULT = true,
         .SUPPORT_FLAG_VISIBILITY = true,
-        .CPU_INFO_BY_ASM = if (x86_rtcd) true else null,
+        .CPU_INFO_BY_ASM = true,
         .RNN_ENABLE_X86_RTCD = if (x86_rtcd) true else null,
     });
 
