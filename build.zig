@@ -52,7 +52,6 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
         .link_libc = true,
-        .use_clang = true,
     });
 
     _ = headers.addModule("headers");
