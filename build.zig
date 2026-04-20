@@ -51,8 +51,6 @@ pub fn build(b: *std.Build) void {
         .root_source_file = upstream.path("include/rnnoise.h"),
         .target = target,
         .optimize = optimize,
-        .link_libc = true,
-        .use_clang = true,
     });
 
     _ = headers.addModule("headers");
