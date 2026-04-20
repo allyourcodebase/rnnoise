@@ -2,7 +2,7 @@
     .name = .rnnoise,
     .version = "0.0.1",
     .fingerprint = 0xefee11620c5ad3ec,
-    .minimum_zig_version = "0.16.0-dev.2676+4e2cec265",
+    .minimum_zig_version = "0.16.0",
     .dependencies = .{
         .upstream = .{
             .url = "git+https://github.com/xiph/rnnoise?ref=main#70f1d256acd4b34a572f999a05c87bf00b67730d",
